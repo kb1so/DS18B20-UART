@@ -24,7 +24,7 @@ namespace DS18B20UART_OW
         const double Temp9 = 0.5;
 
         public DS18B20_SctatchPad()
-        {          
+        {
         }
 
         public DS18B20_SctatchPad(byte[] b)
@@ -42,7 +42,7 @@ namespace DS18B20UART_OW
             return ms.ToArray();
 
         }
-        public static implicit operator byte[] (DS18B20_SctatchPad sp)
+        public static implicit operator byte[](DS18B20_SctatchPad sp)
         {
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
@@ -67,7 +67,7 @@ namespace DS18B20UART_OW
 
         private void DeSerialize(byte[] array)
         {
-            BinaryReader br = new BinaryReader(new MemoryStream(array,0,9));
+            BinaryReader br = new BinaryReader(new MemoryStream(array, 0, 9));
 
             Temperature_LSB = br.ReadByte();
             Temperature_MSB = br.ReadByte();
@@ -98,14 +98,22 @@ namespace DS18B20UART_OW
 
         public double GetTemp()
         {
-            return _GetTemp((Temperature_MSB << 8) | Temperature_LSB);
+            byte ms = Temperature_MSB;
+            byte ls = Temperature_LSB;
+            if ((ms & 128) > 0)
+            {
+                ms = (byte)(0xFF - ms);
+                ls = (byte)(0x00 - ls);
+                return -_GetTemp(ms | ls);
+            }
+            return _GetTemp(ms | ls);
         }
 
         public double _GetTemp(int t)
         {
 
             double t_result;
-            
+
 
             //if ((t & 0xf800) != 0) t_result = -(double)~(t - 1);
             if ((t & 0xf800) != 0) t = -(~(t - 1));
@@ -145,11 +153,11 @@ namespace DS18B20UART_OW
             return t_result;
 
         }
-		
-		
-		
-		public string ToString(string format)
-        {    
+
+
+
+        public string ToString(string format)
+        {
             String tmp = string.Empty;
             //if (formatProvider == null) formatProvider = System.Globalization.CultureInfo.CurrentCulture;
             switch (format)
